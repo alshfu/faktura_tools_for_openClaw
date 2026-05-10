@@ -1,0 +1,31 @@
+{
+  "name": "faktura-service",
+  "version": "1.0.0",
+  "description": "Faktura/Kvitto/Offert PDF renderer — JSON → HTML → PDF",
+  "main": "renderer.js",
+  "bin": {
+    "faktura-render": "./render.js",
+    "faktura-pdf":    "./render-pdf.js"
+  },
+  "scripts": {
+    "start":       "node server.js",
+    "render":      "node render.js",
+    "pdf":         "node render-pdf.js",
+    "build:fonts": "node build-fonts.js",
+    "postinstall": "node build-fonts.js || true"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@fontsource/fraunces":         "^5.0.0",
+    "@fontsource/geist":            "^5.0.0",
+    "@fontsource/geist-mono":       "^5.0.0",
+    "@fontsource/inter":            "^5.0.0",
+    "@fontsource/instrument-serif": "^5.0.0",
+    "@fontsource/jetbrains-mono":   "^5.0.0",
+    "express":                      "^4.19.0",
+    "puppeteer":                    "^22.0.0"
+  },
+  "license": "MIT"
+}

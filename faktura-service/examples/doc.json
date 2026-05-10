@@ -1,0 +1,44 @@
+{
+  "docType": "faktura",
+  "locale": "sv-SE",
+  "labels": {
+    "faktura": "Faktura",
+    "billTo": "Faktureras till",
+    "from": "Avsändare"
+  },
+  "sender": {
+    "name": "Acme Studio AB",
+    "tagline": "Designbyrå",
+    "address": ["Storgatan 1", "111 22 Stockholm"],
+    "orgnr": "556677-8899",
+    "momsnr": "SE556677889901",
+    "bankgiro": "1234-5678",
+    "iban": "SE00 1234 5678 9012 3456 7890",
+    "bic": "HANDSESS",
+    "bank": "Handelsbanken"
+  },
+  "client": {
+    "name": "Kund AB",
+    "attn": "Att: Anna Andersson",
+    "address": ["Kungsgatan 9", "411 19 Göteborg"],
+    "orgnr": "556001-2233"
+  },
+  "meta": {
+    "nr": "2026-0007",
+    "issuedShort": "2026-05-10",
+    "dueShort": "2026-05-31",
+    "terms": "21 dagar netto",
+    "ocr": "20260050007",
+    "currency": "SEK",
+    "currencySymbol": "kr"
+  },
+  "items": [
+    { "id": 1, "title": "Konsultation", "desc": "Strategi & workshops", "qty": 12, "unit": "tim", "price": 1500 },
+    { "id": 2, "title": "Designarbete", "desc": "Identitet + webb", "qty": 30, "unit": "tim", "price": 1250 }
+  ],
+  "momsRate": 0.25,
+  "legal": {
+    "payment": "Dröjsmålsränta enligt räntelagen.",
+    "fskatt": "Innehar F-skattsedel."
+  }
+}

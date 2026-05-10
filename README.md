@@ -47,7 +47,17 @@ billing-system/
 ├── docs/
 │   └── ARCHITECTURE.md        # Detaljerad arkitekturbeskrivning
 │
+├── faktura-service/           # Faktura Constructor (Docker HTTP-tjänst)
+│   ├── server.js              # HTTP-server på port 3030
+│   ├── renderer.js            # JSON → HTML
+│   ├── render-pdf.js          # HTML → PDF via Puppeteer
+│   ├── Dockerfile             # Docker-image
+│   └── docker-compose.yml
+│
+├── deploy.sh                  # Master deployment-script (install/update/status)
+├── install.sh                 # Bakåtkompatibel wrapper
 ├── SOUL_fyodor.md             # Fjodors instruktioner
+├── USER_fyodor.md             # Användardefinitioner
 └── README.md
 ```
 
@@ -60,25 +70,53 @@ billing-system/
 - Ubuntu 22.04+
 - Python 3.10+
 - OpenClaw 2026.5.3+
-- Faktura Constructor (Docker) på `localhost:3030`
+- Docker (rekommenderas) eller Node.js 18+ (fallback)
 
-### Stegvis installation
+### Ett-rads-installation (från GitHub)
 
 ```bash
-# 1. Klona / kopiera till servern
-cp -r billing-system /home/administrator/
+curl -fsSL https://raw.githubusercontent.com/alshfu/faktura_tools_for_openClaw/main/deploy.sh | bash -s install
+```
 
-# 2. Installera Python-beroenden
-pip install requests --break-system-packages
+Skriptet sköter allt automatiskt:
+1. Kontrollerar förutsättningar (Python, OpenClaw, Docker/Node)
+2. Klonar repo till `~/billing-system/`
+3. Installerar Python-beroenden (`requests`)
+4. Initierar tomma databaser
+5. Bygger och startar Faktura Constructor (Docker eller PM2)
+6. Skapar OpenClaw-agenten `fyodor` (eller uppdaterar befintlig)
+7. Kopierar SOUL.md och USER.md till workspace
+8. Startar om gateway
 
-# 3. Säkerställ att Faktura Constructor körs
-curl http://localhost:3030/healthz
-# → {"ok":true}
+### Uppdatera systemet
 
-# 4. Initialisera tomma databaser (skapas vid första skrivning)
-mkdir -p /home/administrator/billing-system/data
+```bash
+~/billing-system/deploy.sh update
+```
 
-# 5. Lägg in den första avsändaren manuellt (eller via wizard)
+Hämtar senaste version från GitHub, behåller all data och konfiguration, bygger om Docker-image och startar om allt.
+
+### Kontrollera status
+
+```bash
+~/billing-system/deploy.sh status
+```
+
+Visar status på Faktura Constructor, agenten, workspace-filer, databaser och git-revision.
+
+### Miljövariabler
+
+```bash
+AGENT_NAME=fakturabot     ~/billing-system/deploy.sh install   # eget agent-namn
+AGENT_MODEL=anthropic/claude-sonnet-4-5   ~/billing-system/deploy.sh install   # annan modell
+FAKTURA_PORT=3031         ~/billing-system/deploy.sh install   # annan port
+BILLING_INSTALL_DIR=/opt/billing  ~/billing-system/deploy.sh install
+```
+
+### Första uppstart — lägg till avsändare och telefon-koppling
+
+```bash
+# Lägg till första avsändaren
 python3 ~/billing-system/tools/db/db_senders.py --lagg-till '{
   "org_nummer": "559203-2279",
   "foretag":    {"namn": "Jowhar AB"},
@@ -87,16 +125,10 @@ python3 ~/billing-system/tools/db/db_senders.py --lagg-till '{
   "kontakt":    {"epost": "info@jowhar.se"}
 }'
 
-# 6. Koppla telefonnummer till avsändaren
+# Koppla telefonnummer till avsändaren
 python3 ~/billing-system/tools/db/db_phone_map.py \
   --koppla "+46735272989" "559203-2279" \
   '{"roll": "anstalld", "namn": "Said"}'
-
-# 7. Uppdatera Fjodors SOUL.md
-cp ~/billing-system/SOUL_fyodor.md ~/.openclaw/workspace-fyodor/SOUL.md
-
-# 8. Starta om gateway
-openclaw gateway restart
 ```
 
 ---

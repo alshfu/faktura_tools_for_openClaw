@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Data — never commit user data
+data/senders.json
+data/recipients.json
+data/invoices.json
+data/phone_map.json
+data/counters.json
+
+# Backups
+*.bak
+*.bak.*
+
+# Faktura Service generated
+faktura-service/node_modules/
+faktura-service/fonts/*
+!faktura-service/fonts/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
