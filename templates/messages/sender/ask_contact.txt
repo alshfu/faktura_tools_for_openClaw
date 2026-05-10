@@ -1,0 +1,10 @@
+📋 *Steg 5 av 7 — Kontaktuppgifter*
+
+Vänligen ange företagets kontaktuppgifter:
+
+  📧 E-post (krävs)
+  📞 Telefon (valfritt)
+  🌐 Webbsida (valfritt)
+
+Exempel:
+info@jowhar.se, +46 8 555 01 24, www.jowhar.se

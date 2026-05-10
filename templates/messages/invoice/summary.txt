@@ -1,0 +1,37 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 *FAKTURASAMMANFATTNING*
+Faktura #{nummer} ({design_namn})
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏢 *Avsändare*
+   {avsandare_namn}
+   Org.nr: {avsandare_org}
+   Bankgiro: {avsandare_bankgiro}
+
+👤 *Mottagare*
+   {mottagare_namn}
+   Org.nr: {mottagare_org}
+   E-post: {mottagare_epost}
+   {mottagare_adress}
+
+🧾 *Fakturadetaljer*
+   📅 Fakturadatum:     {faktura_datum}
+   📅 Förfallodatum:    {forfallo_datum}
+   ⏱  Betalningsvillkor: {betaldagar} dagar
+   📌 Referens:          {referens}
+   💱 Momsläge:          {momslage}
+   🌐 Miljö:             {miljo_emoji} {miljo}
+
+📦 *Rader*
+{rader_lista}
+
+─────────────────────────────
+   Netto:        {netto}
+   Moms:         {moms}
+   *ATT BETALA:  {brutto}*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Svara *JA* för att skapa och skicka
+✏️ Svara *ÄNDRA {fält}* för att rätta något
+❌ Svara *AVBRYT* för att kasta fakturan
+━━━━━━━━━━━━━━━━━━━━━━━━━━

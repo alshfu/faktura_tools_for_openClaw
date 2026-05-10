@@ -1,0 +1,15 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗑️ *FAKTURA BORTTAGEN*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Faktura nr *{nummer}* har tagits bort.
+
+Status: BORTTAGEN
+Mottagare: {mottagare_namn}
+Belopp:    {brutto}
+
+Orsak: {skal}
+
+💡 Fakturan finns kvar i systemet för revision och kan
+återställas om det behövs.
+━━━━━━━━━━━━━━━━━━━━━━━━━━

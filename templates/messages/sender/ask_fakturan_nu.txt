@@ -1,0 +1,16 @@
+📋 *Steg 6 av 7 — Fakturan.nu (valfritt)*
+
+Har företaget ett konto hos *Fakturan.nu*?
+
+Detta gör att fakturor kan skickas automatiskt via e-post direkt från systemet.
+
+  ✅ Om JA — ange:
+     • API-nyckel-ID
+     • API-lösenord
+     • Miljö: sandbox eller produktion
+
+  ❌ Om NEJ — svara HOPPA ÖVER
+     (Fakturor kommer då sparas lokalt som PDF och måste skickas manuellt.)
+
+Exempel om ja:
+sandbox, YvtuE3qKRdHnrrvt0z6x, w1BR6iGixoJzS_mHPxGUa1a6bI2fCGC7bC1kBEYt

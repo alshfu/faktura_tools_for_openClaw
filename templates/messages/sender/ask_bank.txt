@@ -1,0 +1,15 @@
+📋 *Steg 4 av 7 — Bankuppgifter*
+
+Vänligen ange minst ett av följande betalningsalternativ:
+
+  💳 *Bankgiro* (svenska företag) — t.ex. 555-6666
+  💳 *Plusgiro* — t.ex. 12345-6
+  🌍 *IBAN* (internationella betalningar) — t.ex. SE00 1234 5678 9012 3456 7890
+  🌍 *BIC/SWIFT* — t.ex. HANDSESS
+
+Skriv det du har, ett per rad eller separerat med komma.
+
+Exempel:
+Bankgiro: 555-6666
+IBAN: SE00 1234 5678 9012 3456 7890
+BIC: HANDSESS

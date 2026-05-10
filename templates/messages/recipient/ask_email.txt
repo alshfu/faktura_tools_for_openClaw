@@ -1,0 +1,5 @@
+📋 *Ny mottagare — Steg 3 av 4*
+
+Ange e-postadress för fakturor.
+
+Exempel: faktura@kund.se

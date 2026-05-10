@@ -1,0 +1,10 @@
+📋 *Ny mottagare — Steg 4 av 4*
+
+Ange mottagarens postadress separerat med komma:
+
+  1️⃣ Gatuadress
+  2️⃣ Postnummer
+  3️⃣ Ort
+
+Exempel:
+Kungsgatan 9, 411 19, Göteborg

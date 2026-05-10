@@ -1,0 +1,11 @@
+📋 *Steg 3 av 7 — Företagsadress*
+
+Vänligen ange företagets postadress i tre delar:
+
+  1️⃣ Gatuadress (t.ex. Storgatan 12)
+  2️⃣ Postnummer (t.ex. 111 23)
+  3️⃣ Ort (t.ex. Stockholm)
+
+Du kan skriva allt i ett svar separerat med komma:
+
+Storgatan 12, 111 23, Stockholm

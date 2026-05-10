@@ -1,0 +1,17 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 *KREDITNOTA SKAPAD*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Kreditnota nr *{kredit_nummer}* är klar.
+
+Denna kreditnota gäller för:
+📄 Originalfaktura nr {original_nummer}
+👤 Mottagare: {mottagare_namn}
+💰 Belopp: {brutto}
+
+Orsak: {skal}
+
+Status på originalfakturan har ändrats till *KREDITERAD*.
+
+PDF bifogas nedan.
+━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,21 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+👋 Välkommen!
+
+Jag är Fjodor — din digitala bokföringsassistent.
+
+Innan vi kan börja skapa fakturor behöver jag registrera ditt företag i systemet.
+
+Detta är en engångsregistrering och tar cirka 5 minuter.
+Du behöver följande till hands:
+
+  📋 Organisationsnummer
+  📋 Företagsadress
+  📋 Bankgiro eller IBAN
+  📋 E-postadress för utgående fakturor
+  📋 Eventuella API-nycklar till Fakturan.nu (valfritt)
+
+Är du redo att börja?
+
+Svara JA för att starta registreringen
+eller AVBRYT för att avbryta.
+━━━━━━━━━━━━━━━━━━━━━━━━━━

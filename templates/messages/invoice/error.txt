@@ -1,0 +1,11 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ *NÅGOT GICK FEL*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Operationen kunde inte slutföras.
+
+Steg: {steg}
+Felmeddelande: {fel}
+
+💡 Du kan försöka igen, eller kontakta {agare_namn} om problemet kvarstår.
+━━━━━━━━━━━━━━━━━━━━━━━━━━

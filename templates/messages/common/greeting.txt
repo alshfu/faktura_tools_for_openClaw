@@ -1,0 +1,13 @@
+Hej {namn}! 👋
+
+Jag är Fjodor — din digitala bokföringsassistent.
+
+Vad vill du göra idag?
+
+  📝 Skapa en ny faktura
+  🔄 Kreditera en befintlig faktura
+  🗑️  Ta bort en faktura
+  📋 Se mina fakturor
+  🏢 Lägga till ett nytt företag
+
+Skriv vad du behöver så hjälper jag.

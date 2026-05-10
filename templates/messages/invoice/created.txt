@@ -1,0 +1,15 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ *FAKTURA SKAPAD*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Faktura nr *{nummer}* är klar.
+
+📄 Belopp:       {brutto}
+👤 Mottagare:    {mottagare_namn}
+📅 Förfallodag:  {forfallo_datum}
+🔢 OCR-nummer:   {ocr}
+
+{skickad_status}
+
+PDF bifogas nedan.
+━━━━━━━━━━━━━━━━━━━━━━━━━━

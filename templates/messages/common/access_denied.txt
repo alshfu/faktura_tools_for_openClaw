@@ -1,0 +1,7 @@
+Hej!
+
+Jag är en bokföringsassistent och hanterar endast fakturor.
+
+För andra frågor — kontakta {agare_namn} direkt.
+
+Vill du skapa, ändra eller fråga om en faktura? Skriv vad du behöver så hjälper jag.

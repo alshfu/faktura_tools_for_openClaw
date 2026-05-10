@@ -1,0 +1,8 @@
+📋 *Steg 2 av 7 — Företagsnamn*
+
+Vänligen ange det fullständiga registrerade företagsnamnet.
+
+Exempel: Jowhar AB
+
+💡 Om du har ett tagline eller undertitel kan du lägga till det med kommatecken:
+   Jowhar AB, Bygg & Renovering

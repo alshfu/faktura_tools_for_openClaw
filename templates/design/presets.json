@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "uppdaterad": "2026-05-10",
+  "shabloner": {
+    "klassisk_svart": {
+      "namn": "Klassisk Svart",
+      "beskrivning": "Mörk header, varmgrå papper. Tidlös elegans.",
+      "forhandsvisning": "Mörk header, varm beige bakgrund, accent i brunrött",
+      "style": {
+        "font": "Geist",
+        "headerBg": "#1a1814",
+        "headerText": "#f3efe6",
+        "contentBg": "#f3efe6",
+        "contentText": "#1a1814",
+        "footerBg": "#ebe5d8",
+        "footerText": "#3d3830",
+        "accent": "#7d3a2e",
+        "showGrain": true
+      }
+    },
+    "minimalistisk_vit": {
+      "namn": "Minimalistisk Vit",
+      "beskrivning": "Renlinjig svart-vit. Modern och tidlös.",
+      "forhandsvisning": "Vit bakgrund, svart text, ingen onödig dekoration",
+      "style": {
+        "font": "Inter",
+        "headerBg": "#ffffff",
+        "headerText": "#000000",
+        "contentBg": "#ffffff",
+        "contentText": "#1a1a1a",
+        "footerBg": "#f5f5f5",
+        "footerText": "#666666",
+        "accent": "#000000",
+        "showGrain": false
+      }
+    },
+    "elegant_burgund": {
+      "namn": "Elegant Burgund",
+      "beskrivning": "Djup burgundröd med varm kräm. Klassisk premiumkänsla.",
+      "forhandsvisning": "Burgundröd header, kräm bakgrund, guldaccent",
+      "style": {
+        "font": "Instrument Serif",
+        "headerBg": "#6e1d2a",
+        "headerText": "#fdf7ed",
+        "contentBg": "#fdf7ed",
+        "contentText": "#2b1d1d",
+        "footerBg": "#f0e8d8",
+        "footerText": "#5a4a3a",
+        "accent": "#a06030",
+        "showGrain": true
+      }
+    },
+    "modern_bla": {
+      "namn": "Modern Blå",
+      "beskrivning": "Djupblå header, ljusgrå papper. Professionell företagskänsla.",
+      "forhandsvisning": "Marinblå header, ljusgrå bakgrund, kall accent",
+      "style": {
+        "font": "Geist",
+        "headerBg": "#1e3a5f",
+        "headerText": "#ffffff",
+        "contentBg": "#f4f6f9",
+        "contentText": "#1a1f2e",
+        "footerBg": "#e8ecf2",
+        "footerText": "#4a5568",
+        "accent": "#2563eb",
+        "showGrain": false
+      }
+    },
+    "professionell_gron": {
+      "namn": "Professionell Grön",
+      "beskrivning": "Mossgrön header, vit papper. Naturlig och saklig.",
+      "forhandsvisning": "Mörkgrön header, vit bakgrund, grön accent",
+      "style": {
+        "font": "Inter",
+        "headerBg": "#2d4a3e",
+        "headerText": "#f0f4ef",
+        "contentBg": "#ffffff",
+        "contentText": "#1a1a1a",
+        "footerBg": "#eef2ed",
+        "footerText": "#3d5246",
+        "accent": "#5a7c5e",
+        "showGrain": false
+      }
+    }
+  }
+}

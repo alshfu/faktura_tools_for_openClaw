@@ -1,0 +1,7 @@
+📋 *Steg 1 av 7 — Organisationsnummer*
+
+Vänligen ange företagets organisationsnummer.
+
+Format: 559123-4567 (10 siffror med bindestreck)
+
+Exempel: 559203-2279

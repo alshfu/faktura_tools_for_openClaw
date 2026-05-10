@@ -1,0 +1,6 @@
+📋 *Ny mottagare — Steg 2 av 4*
+
+Ange mottagarens företagsnamn.
+
+💡 Du kan lägga till kontaktperson efter komma:
+   Acme AB, Anna Andersson

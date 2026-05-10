@@ -1,0 +1,39 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ *REGISTRERING KLAR — KONTROLLERA UPPGIFTERNA*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏢 *Företag*
+   Namn:     {namn}
+   Org.nr:   {org_nummer}
+   VAT:      {moms_nummer}
+   F-skatt:  {f_skatt}
+
+📍 *Adress*
+   {gata}
+   {postnummer} {stad}, {land}
+
+📞 *Kontakt*
+   E-post:   {epost}
+   Telefon:  {telefon}
+
+🏦 *Bank*
+   Bankgiro: {bankgiro}
+   IBAN:     {iban}
+   BIC:      {bic}
+
+🌐 *Fakturan.nu API*
+   Status:   {fakturan_nu_status}
+   Miljö:    {fakturan_nu_miljo}
+
+🎨 *Design*
+   Mall:     {design_namn}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Är allt korrekt?
+
+✅ Svara *JA* för att spara
+✏️ Svara *ÄNDRA {fält}* för att rätta något
+   (t.ex. "ÄNDRA adress")
+❌ Svara *AVBRYT* för att kasta registreringen
+━━━━━━━━━━━━━━━━━━━━━━━━━━
