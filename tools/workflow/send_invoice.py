@@ -18,6 +18,26 @@ from pathlib import Path
 PROJEKT_ROT = Path(__file__).resolve().parent.parent.parent
 DB_TOOLS    = PROJEKT_ROT / "tools" / "db"
 
+def _openclaw_bin() -> str:
+    """Hitta openclaw-binary oavsett PATH (hanterar npm-global-installationer)."""
+    import shutil, os
+    if shutil.which("openclaw"):
+        return "openclaw"
+    candidates = [
+        Path.home() / ".npm-global" / "bin" / "openclaw",
+        Path("/usr/local/bin/openclaw"),
+        Path.home() / ".nvm" / "versions" / "node",  # söks nedan
+    ]
+    for p in candidates:
+        if p.exists():
+            return str(p)
+    # sök i ~/.nvm/versions/node/*/bin/openclaw
+    nvm_root = Path.home() / ".nvm" / "versions" / "node"
+    if nvm_root.exists():
+        for match in sorted(nvm_root.glob("*/bin/openclaw"), reverse=True):
+            return str(match)
+    return "openclaw"  # fallback — ger tydligt felmeddelande
+
 
 def nu_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -58,7 +78,7 @@ def main():
 
     # 2. Skicka via OpenClaw CLI
     r = subprocess.run([
-        "openclaw", "message", "send",
+        _openclaw_bin(), "message", "send",
         "--channel", "whatsapp",
         "--target",  args.till,
         "--media",   pdf_path,
