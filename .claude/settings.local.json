@@ -3,7 +3,11 @@
     "allow": [
       "Bash(python:*)",
       "Bash(.venv/bin/pip install:*)",
-      "Bash(.venv/bin/python -m pytest test_main.py -v)"
+      "Bash(.venv/bin/python -m pytest test_main.py -v)",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -10 {}')",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)"
     ]
   }
 }
