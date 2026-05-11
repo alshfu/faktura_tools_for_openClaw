@@ -70,7 +70,8 @@ def find_or_create_client(s: requests.Session, base: str,
       2. Sök via ?org_number= filter — uppdaterar cache om hittas
       3. Skapa ny klient — sparar ID i cache
     """
-    org         = mottagare.get("org_nummer", "").replace("-", "")
+    org_nummer  = mottagare.get("id", mottagare.get("org_nummer", ""))
+    org         = org_nummer.replace("-", "")
     cache_key   = f"fakturan_nu_client_id_{miljo}"
     cached_id   = mottagare.get(cache_key)
 
@@ -82,18 +83,18 @@ def find_or_create_client(s: requests.Session, base: str,
     adr   = mottagare.get("adress", {})
 
     # Sök via API-filter
-    r = s.get(f"{base}/clients", params={"org_number": mottagare.get("org_nummer", "")})
+    r = s.get(f"{base}/clients", params={"org_number": org_nummer})
     if r.ok:
         for c in r.json().get("data", []):
             if c.get("org_number", "").replace("-", "") == org:
-                _cache_client_id(mottagare["org_nummer"], cache_key, c["id"])
+                _cache_client_id(org_nummer, cache_key, c["id"])
                 return c["id"]
 
     # Skapa ny klient
     payload = {
         "company":     namn,
         "email":       email,
-        "org_number":  mottagare.get("org_nummer", ""),
+        "org_number":  org_nummer,
         "client_type": "company",
         "address": {
             "street_address": adr.get("gata", ""),
@@ -112,7 +113,7 @@ def find_or_create_client(s: requests.Session, base: str,
     if not r.ok:
         fel(f"Kunde inte skapa klient i Fakturan.nu: {r.text[:200]}")
     client_id = r.json()["data"]["id"]
-    _cache_client_id(mottagare["org_nummer"], cache_key, client_id)
+    _cache_client_id(org_nummer, cache_key, client_id)
     return client_id
 
 
