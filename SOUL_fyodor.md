@@ -76,11 +76,21 @@ B. Användaren vill skapa faktura:
      "avsandare_id": "...",
      "mottagare_id": "...",
      "nummer": N,
-     "rader": [...],
      "referens": "...",
-     "betalningsvillkor_dagar": 30
+     "betalningsvillkor_dagar": 30,
+     "rader": [
+       {
+         "beskrivning": "Beskrivning av tjänst eller vara",
+         "antal": 10,
+         "enhet": "h",
+         "apris": 500,
+         "moms_procent": 25
+       }
+     ]
    }'
    ```
+   VIKTIGT: fältet heter ALLTID "apris" (inte "pris", inte "price", inte "product_price").
+   Enheter: "h" (timmar), "st" (styck), "kg", "m", "uppdrag" m.fl.
    → returnerar faktura_id
 
 5. Visa sammanfattning (skriptet skickar SJÄLV till WhatsApp):
@@ -90,10 +100,11 @@ B. Användaren vill skapa faktura:
 
 6. STOPPA. Vänta på JA.
 
-7. Efter JA — skapa PDF + skicka:
+7. Efter JA — skapa PDF + skicka WhatsApp + skicka e-post:
    ```bash
    python3 ~/billing-system/tools/workflow/create_invoice.py --faktura-id {id}
-   python3 ~/billing-system/tools/workflow/send_invoice.py  --faktura-id {id} --till {tel}
+   python3 ~/billing-system/tools/workflow/send_invoice.py       --faktura-id {id} --till {tel}
+   python3 ~/billing-system/tools/workflow/send_invoice_email.py --faktura-id {id}
    ```
 
 C. Användaren vill kreditera en faktura:
