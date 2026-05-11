@@ -139,16 +139,8 @@ clone_or_update_repo() {
             warn "Befinner sig på branch '$current_branch', byter till '$GITHUB_BRANCH'"
             git checkout "$GITHUB_BRANCH" --quiet
         fi
-        # Stash any local changes so pull can proceed cleanly
-        local stashed=0
-        if ! git diff --quiet || ! git diff --cached --quiet; then
-            git stash --quiet
-            stashed=1
-        fi
-        git pull --quiet
-        if [ "$stashed" = "1" ]; then
-            git stash pop --quiet 2>/dev/null || warn "Kunde inte återställa lokala ändringar (git stash pop misslyckades)"
-        fi
+        git fetch --quiet
+        git reset --hard "origin/$GITHUB_BRANCH" --quiet
         ok "Uppdaterat från GitHub ($(git rev-parse --short HEAD))"
     elif [ -d "$INSTALL_DIR" ] && [ "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
         warn "$INSTALL_DIR finns men är inte git-repo. Hoppar över git-hämtning."
