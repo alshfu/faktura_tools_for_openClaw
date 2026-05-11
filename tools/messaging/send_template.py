@@ -46,10 +46,27 @@ def substituera(text: str, variabler: dict) -> str:
     return re.sub(r'\{([^{}]+)\}', replace, text)
 
 
+def _openclaw_bin() -> str:
+    import shutil
+    if shutil.which("openclaw"):
+        return "openclaw"
+    for p in [
+        Path.home() / ".npm-global" / "bin" / "openclaw",
+        Path("/usr/local/bin/openclaw"),
+    ]:
+        if p.exists():
+            return str(p)
+    nvm = Path.home() / ".nvm" / "versions" / "node"
+    if nvm.exists():
+        for m in sorted(nvm.glob("*/bin/openclaw"), reverse=True):
+            return str(m)
+    return "openclaw"
+
+
 def skicka_via_openclaw(meddelande: str, telefon: str) -> tuple:
     """Returnerar (ok: bool, info: str)"""
     cmd = [
-        "openclaw", "message", "send",
+        _openclaw_bin(), "message", "send",
         "--channel", "whatsapp",
         "--target", telefon,
         "--message", meddelande,
