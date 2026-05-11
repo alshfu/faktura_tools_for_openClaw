@@ -75,6 +75,14 @@ def load_smtp_config() -> dict:
     return epost
 
 
+def testlage_epost() -> str | None:
+    """Returnerar override-epost för testläge, eller None i produktion."""
+    if not CONFIG_PATH.exists():
+        return None
+    cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    return cfg.get("testlage_epost") or None
+
+
 def skicka_via_smtp(faktura: dict, avsandare: dict, mottagare: dict, pdf_sokväg: str) -> str:
     """Skicka faktura via SMTP med PDF-bilaga. Returnerar mottagarens e-post."""
     smtp_cfg  = load_smtp_config()
@@ -247,6 +255,11 @@ def main():
     # 4. Routing: Fakturan.nu om aktiverat, annars SMTP
     fakt_nu = avsandare.get("fakturan_nu", {})
     anvand_fakturan_nu = fakt_nu.get("aktiverad", False)
+
+    # Testläge: ersätt mottagarens e-post om override finns i config
+    test_epost = testlage_epost()
+    if test_epost:
+        mottagare = {**mottagare, "kontakt": {**mottagare.get("kontakt", {}), "epost": test_epost}}
 
     if anvand_fakturan_nu:
         # ── Fakturan.nu-flöde ──────────────────────────────────────────────
