@@ -173,9 +173,11 @@ def cmd_hamta(args):
     org = args.org_nummer
     if org not in db.get("avsandare", {}):
         fel(f"Avsändare {org} hittades inte")
-    record = dict(db["avsandare"][org])
-    # Maskera känslig data
-    if record.get("fakturan_nu", {}).get("api_losenord"):
+    import copy
+    record = copy.deepcopy(db["avsandare"][org])
+    intern = getattr(args, "intern", False)
+    # Maskera känslig data om det inte är ett internt anrop
+    if not intern and record.get("fakturan_nu", {}).get("api_losenord"):
         record["fakturan_nu"]["api_losenord"] = "***maskerad***"
     ok({"avsandare": record})
 
@@ -342,7 +344,8 @@ def cmd_uppdatera_nasta_fakturanummer(args):
 def main():
     p = argparse.ArgumentParser(description="CRUD för avsändarregistret")
     p.add_argument("--lista",      action="store_true")
-    p.add_argument("--hamta",      metavar="ORG")
+    p.add_argument("--hamta",        metavar="ORG")
+    p.add_argument("--hamta-intern", metavar="ORG", dest="hamta_intern")
     p.add_argument("--finns",      metavar="ORG")
     p.add_argument("--sok",        metavar="TERM")
     p.add_argument("--lagg-till",  metavar="JSON", dest="lagg_till")
@@ -361,7 +364,9 @@ def main():
     if args.lista:
         cmd_lista(args)
     elif args.hamta:
-        args.org_nummer = args.hamta; cmd_hamta(args)
+        args.org_nummer = args.hamta; args.intern = False; cmd_hamta(args)
+    elif args.hamta_intern:
+        args.org_nummer = args.hamta_intern; args.intern = True; cmd_hamta(args)
     elif args.finns:
         args.org_nummer = args.finns; cmd_finns(args)
     elif args.sok:

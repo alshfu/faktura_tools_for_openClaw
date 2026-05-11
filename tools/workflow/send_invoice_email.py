@@ -162,8 +162,8 @@ def main():
         fel(f"Faktura hittades inte: {args.faktura_id}")
     faktura = r["faktura"]
 
-    # 2. Hämta avsändare
-    r = kor(["python3", str(DB_TOOLS / "db_senders.py"), "--hamta", faktura["avsandare_id"]])
+    # 2. Hämta avsändare (intern = okrypterade credentials)
+    r = kor(["python3", str(DB_TOOLS / "db_senders.py"), "--hamta-intern", faktura["avsandare_id"]])
     if r.get("status") != "ok":
         fel("Avsändare hittades inte")
     avsandare = r["avsandare"]
