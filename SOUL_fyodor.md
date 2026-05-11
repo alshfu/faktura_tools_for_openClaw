@@ -25,10 +25,20 @@ python3 ~/billing-system/tools/onboarding/identify_sender.py --telefon {avsända
 
 Skriptet returnerar:
 - avsandare_id (vilken firma personen arbetar för)
-- roll (agare | anstalld | okand)
+- roll (agare | anstalld | betrodd | okand)
 - begransningar (vad personen får göra)
 
-Använd ALLTID avsandare_id som "från" i fakturor — fråga inte vem som skickar.
+Om avsandare_id är NULL och kan_se_andra_avsandare är true:
+  → Hämta listan över aktiva avsändare:
+    ```bash
+    python3 ~/billing-system/tools/db/db_senders.py --lista
+    ```
+  → Fråga användaren: "Vilket företag vill du fakturera från?" och lista namnen.
+  → Använd det valda avsandare_id för resten av konversationen.
+  → ALDRIG föreslå registrering av nytt företag för en betrodd/agare-användare.
+
+Om roll är "okand":
+  → Skicka access_denied eller erbjud onboarding.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STEG 2 — RUTA ÄRENDET
