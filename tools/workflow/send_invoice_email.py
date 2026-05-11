@@ -24,7 +24,7 @@ DB_TOOLS    = PROJEKT_ROT / "tools" / "db"
 
 API_URLS = {
     "sandbox":    "https://sandbox.fakturan.nu/api/v2",
-    "produktion": "https://app.fakturan.nu/api/v2",
+    "produktion": "https://www.fakturan.nu/api/v2",
 }
 
 
@@ -68,23 +68,12 @@ def find_or_create_client(s: requests.Session, base: str, mottagare: dict) -> in
     email = mottagare.get("kontakt", {}).get("epost", "")
     adr = mottagare.get("adress", {})
 
-    # Sök efter befintlig klient med samma org_nummer
-    r = s.get(f"{base}/clients", params={"page": 1})
+    # Sök efter befintlig klient via org_number-filter (API stöder detta direkt)
+    r = s.get(f"{base}/clients", params={"org_number": mottagare.get("org_nummer", "")})
     if r.ok:
-        for page in range(1, 20):
-            r = s.get(f"{base}/clients", params={"page": page})
-            if not r.ok:
-                break
-            data = r.json().get("data", [])
-            if not data:
-                break
-            for c in data:
-                c_org = (c.get("org_number") or "").replace("-", "")
-                if c_org == org:
-                    return c["id"]
-            paging = r.json().get("paging", {})
-            if page >= paging.get("pages", 1):
-                break
+        for c in r.json().get("data", []):
+            if c.get("org_number", "").replace("-", "") == org:
+                return c["id"]
 
     # Skapa ny klient
     payload = {
@@ -117,11 +106,8 @@ def build_rows(rader: list) -> list:
     for rad in rader:
         if rad.get("textrad"):
             result.append({
-                "product_name": rad.get("beskrivning", ""),
-                "amount":       "1",
-                "product_price": "0",
-                "product_tax":   0,
-                "text_row":      True,
+                "text":     rad.get("beskrivning", ""),
+                "text_row": True,
             })
         else:
             result.append({
@@ -190,8 +176,9 @@ def main():
     # 7. Skapa faktura i Fakturan.nu
     fnu_invoice_id = create_invoice(session, base, faktura, client_id)
 
-    # 8. Skicka
-    r = session.post(f"{base}/invoices/{fnu_invoice_id}/send")
+    # 8. Skicka (delivery_method=email explicit per API-docs)
+    r = session.post(f"{base}/invoices/{fnu_invoice_id}/send",
+                     json={"delivery_method": "email"})
     if not r.ok or r.text.strip() != "OK":
         fel(f"Skickning misslyckades: {r.status_code} {r.text[:200]}")
 
