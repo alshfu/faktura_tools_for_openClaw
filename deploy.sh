@@ -406,19 +406,19 @@ setup_secrets_if_missing() {
         warn "Ingen konfiguration finns ännu"
     fi
 
-    if [ ! -t 0 ]; then
-        # Non-interactive (t.ex. piped curl) — kan inte köra setup
-        warn "Ej interaktivt läge — kör manuellt efter installation:"
-        echo "    python3 $setup_script"
+    if [ "${AUTO_SETUP_SECRETS:-1}" != "1" ]; then
+        info "AUTO_SETUP_SECRETS=0 — hoppar interaktiv guide"
+        echo "    Kör manuellt: python3 $setup_script"
         return 0
     fi
 
-    if [ "${AUTO_SETUP_SECRETS:-1}" = "1" ]; then
-        info "Startar konfigurationsguide..."
-        python3 "$setup_script" || warn "Konfigurationsguide avbruten"
+    info "Startar konfigurationsguide..."
+    # Läs från /dev/tty så att interaktiv inmatning fungerar även i piped läge (curl | bash)
+    if [ -e /dev/tty ]; then
+        python3 "$setup_script" < /dev/tty || warn "Konfigurationsguide avbruten"
     else
-        info "AUTO_SETUP_SECRETS=0 — hoppar interaktiv guide"
-        echo "    Kör manuellt: python3 $setup_script"
+        warn "Ingen terminal tillgänglig — kör manuellt:"
+        echo "    python3 $setup_script"
     fi
 }
 
