@@ -61,18 +61,32 @@ def load_credentials(avsandare: dict, miljo: str) -> tuple[str, str]:
     return nyckel, losenord
 
 
-def find_or_create_client(s: requests.Session, base: str, mottagare: dict) -> int:
-    """Hitta eller skapa klient i Fakturan.nu. Returnerar client_id."""
-    org = mottagare.get("org_nummer", "").replace("-", "")
-    namn = mottagare.get("foretag", {}).get("namn", "")
-    email = mottagare.get("kontakt", {}).get("epost", "")
-    adr = mottagare.get("adress", {})
+def find_or_create_client(s: requests.Session, base: str,
+                          mottagare: dict, miljo: str) -> int:
+    """Hitta eller skapa klient i Fakturan.nu. Returnerar client_id.
 
-    # Sök efter befintlig klient via org_number-filter (API stöder detta direkt)
+    Prioritetsordning:
+      1. Cachad fakturan_nu_client_id i lokal DB (per miljö) — inga API-anrop
+      2. Sök via ?org_number= filter — uppdaterar cache om hittas
+      3. Skapa ny klient — sparar ID i cache
+    """
+    org         = mottagare.get("org_nummer", "").replace("-", "")
+    cache_key   = f"fakturan_nu_client_id_{miljo}"
+    cached_id   = mottagare.get(cache_key)
+
+    if cached_id:
+        return int(cached_id)
+
+    namn  = mottagare.get("foretag", {}).get("namn", "")
+    email = mottagare.get("kontakt", {}).get("epost", "")
+    adr   = mottagare.get("adress", {})
+
+    # Sök via API-filter
     r = s.get(f"{base}/clients", params={"org_number": mottagare.get("org_nummer", "")})
     if r.ok:
         for c in r.json().get("data", []):
             if c.get("org_number", "").replace("-", "") == org:
+                _cache_client_id(mottagare["org_nummer"], cache_key, c["id"])
                 return c["id"]
 
     # Skapa ny klient
@@ -97,7 +111,16 @@ def find_or_create_client(s: requests.Session, base: str, mottagare: dict) -> in
     r = s.post(f"{base}/clients", json=payload)
     if not r.ok:
         fel(f"Kunde inte skapa klient i Fakturan.nu: {r.text[:200]}")
-    return r.json()["data"]["id"]
+    client_id = r.json()["data"]["id"]
+    _cache_client_id(mottagare["org_nummer"], cache_key, client_id)
+    return client_id
+
+
+def _cache_client_id(org_nummer: str, cache_key: str, client_id: int):
+    """Spara fakturan_nu_client_id i lokal mottagare-DB för framtida anrop."""
+    kor(["python3", str(DB_TOOLS / "db_recipients.py"),
+         "--uppdatera", org_nummer,
+         json.dumps({cache_key: client_id})])
 
 
 def build_rows(rader: list) -> list:
@@ -170,8 +193,8 @@ def main():
     session.auth = (api_key, api_pass)
     session.headers["Content-Type"] = "application/json"
 
-    # 6. Hitta eller skapa klient
-    client_id = find_or_create_client(session, base, mottagare)
+    # 6. Hitta eller skapa klient (använder cache i lokal DB)
+    client_id = find_or_create_client(session, base, mottagare, miljo)
 
     # 7. Skapa faktura i Fakturan.nu
     fnu_invoice_id = create_invoice(session, base, faktura, client_id)
