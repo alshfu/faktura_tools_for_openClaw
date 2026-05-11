@@ -202,8 +202,18 @@ class MackAnClient(BaseCompanyClient):
         return data
 
     def _parse(self, orgnr: str, raw: dict, include_docs: bool) -> Company:
-        """Преобразует ответ mackan.eu в объект Company."""
-        # ── Адрес ────────────────────────────────
+        """Преобразует ответ mackan.eu в объект Company.
+
+        Поддерживает два формата:
+          - Упрощённый: {"company_name": ..., "address": {...}, ...}
+          - Нативный Bolagsverket: {"organisationer": [{...}]}
+        """
+        # Если ответ в нативном формате Bolagsverket — разворачиваем
+        org_list = raw.get("organisationer")
+        if org_list and isinstance(org_list, list) and org_list:
+            return self._parse_native(orgnr, org_list[0], raw)
+
+        # Упрощённый формат (legacy)
         addr_raw = raw.get("address") or raw.get("adress") or {}
         address = Address(
             street=_pick(addr_raw, "street", "gatuadress"),
@@ -211,21 +221,13 @@ class MackAnClient(BaseCompanyClient):
             city=_pick(addr_raw, "city", "postort"),
             country=_pick(addr_raw, "country", "land"),
         )
-
-        # ── SNI-коды ─────────────────────────────
         raw_sni = raw.get("sni_codes") or raw.get("sniKoder") or []
         sni_codes = [
             SniCode(code=str(c), sector=_SNI_LABELS.get(str(c)[:2], ""))
             for c in raw_sni
         ]
-
-        # ── VAT / Moms ───────────────────────────
         is_vat = _pick_bool(raw, "vat_registered", "registreradForMoms", "momsRegistrerad")
         vat_info = generate_vat_info(orgnr, is_registered=is_vat)
-
-        # ── Годовые отчёты ────────────────────────
-        annual_reports = _parse_documents(raw) if include_docs else []
-
         return Company(
             org_number=_pick(raw, "org_number", "organisationsnummer") or orgnr,
             name=_pick(raw, "company_name", "namn"),
@@ -235,7 +237,61 @@ class MackAnClient(BaseCompanyClient):
             business_description=_pick(raw, "business_description", "verksamhetsbeskrivning"),
             address=address,
             sni_codes=sni_codes,
-            annual_reports=annual_reports,
+            annual_reports=_parse_documents(raw) if include_docs else [],
+            is_vat_registered=is_vat,
+            vat_info=vat_info,
+            raw={**raw, "_source": self.SOURCE},
+        )
+
+    def _parse_native(self, orgnr: str, org: dict, raw: dict) -> Company:
+        """Парсинг нативного формата Bolagsverket API."""
+        # Название
+        namn_lista = (org.get("organisationsnamn") or {}).get("organisationsnamnLista") or []
+        name = namn_lista[0].get("namn") if namn_lista else None
+
+        # Статус (verksamOrganisation.kod == "JA" → Aktiv)
+        verk = (org.get("verksamOrganisation") or {}).get("kod", "")
+        status = "Aktiv" if verk == "JA" else "Avregistrerad"
+
+        # Datum
+        reg_date = (org.get("organisationsdatum") or {}).get("registreringsdatum")
+
+        # Organisationsform
+        legal_form = (org.get("organisationsform") or {}).get("klartext")
+
+        # Beskrivning
+        business_desc = (org.get("verksamhetsbeskrivning") or {}).get("beskrivning")
+
+        # Adress
+        pa = (org.get("postadressOrganisation") or {}).get("postadress") or {}
+        address = Address(
+            street=pa.get("utdelningsadress"),
+            postal_code=_fmt_postnr(pa.get("postnummer")),
+            city=(pa.get("postort") or "").title() or None,
+            country="SE",
+        )
+
+        # SNI
+        sni_list = (org.get("naringsgrenOrganisation") or {}).get("sni") or []
+        sni_codes = [
+            SniCode(code=s["kod"].strip(), sector=s.get("klartext", ""))
+            for s in sni_list
+            if s.get("kod", "").strip()
+        ]
+
+        is_vat = None
+        vat_info = generate_vat_info(orgnr, is_registered=is_vat)
+
+        return Company(
+            org_number=orgnr,
+            name=name,
+            legal_form=legal_form,
+            status=status,
+            registration_date=reg_date,
+            business_description=business_desc,
+            address=address,
+            sni_codes=sni_codes,
+            annual_reports=[],
             is_vat_registered=is_vat,
             vat_info=vat_info,
             raw={**raw, "_source": self.SOURCE},
@@ -265,6 +321,16 @@ def _pick(data: dict, *keys: str) -> Optional[str]:
         if val is not None:
             return val
     return None
+
+
+def _fmt_postnr(raw: Optional[str]) -> Optional[str]:
+    """'37450' → '374 50'"""
+    if not raw:
+        return None
+    s = raw.strip()
+    if len(s) == 5 and s.isdigit():
+        return f"{s[:3]} {s[3:]}"
+    return s
 
 
 def _pick_bool(data: dict, *keys: str) -> Optional[bool]:
