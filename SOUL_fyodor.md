@@ -77,7 +77,15 @@ B. Användaren vill skapa faktura:
    ```bash
    python3 ~/billing-system/tools/db/db_recipients.py --sok "{namn_eller_org}"
    ```
-   - Hittar inte? Starta mottagar-wizard:
+   - Hittar inte OCH användaren har redan angett org.nr + adress + e-post i sitt meddelande:
+     → Hämta data från Bolagsverket och lägg till direkt, UTAN wizard:
+     ```bash
+     python3 ~/billing-system/tools/onboarding/company_lookup.py --orgnr {org} --format mottagare
+     # Slå ihop med uppgiven e-post och lägg till:
+     python3 ~/billing-system/tools/db/db_recipients.py --lagg-till '{...}'
+     ```
+   - Hittar inte OCH användaren har INTE gett fullständiga uppgifter:
+     → Starta wizard:
      ```bash
      python3 ~/billing-system/tools/onboarding/onboard_recipient.py --start --till {tel}
      ```
