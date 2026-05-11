@@ -17,10 +17,15 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import smtplib
+import ssl
+from email.message import EmailMessage
+
 import requests
 
 PROJEKT_ROT = Path(__file__).resolve().parent.parent.parent
 DB_TOOLS    = PROJEKT_ROT / "tools" / "db"
+CONFIG_PATH = Path.home() / ".billing-system" / "config.json"
 
 API_URLS = {
     "sandbox":    "https://sandbox.fakturan.nu/api/v2",
@@ -50,15 +55,65 @@ def kor(cmd: list) -> dict:
         return {"status": "fel", "raw": r.stdout[:200]}
 
 
-def load_credentials(avsandare: dict, miljo: str) -> tuple[str, str]:
+def load_credentials(avsandare: dict) -> tuple[str, str]:
     fakt = avsandare.get("fakturan_nu", {})
-    if not fakt.get("aktiverad", False):
-        fel("Fakturan.nu är inte aktiverat för denna avsändare (aktiverad=false)")
     nyckel   = fakt.get("api_nyckel", "")
     losenord = fakt.get("api_losenord", "")
     if not nyckel or not losenord:
         fel("Fakturan.nu api_nyckel eller api_losenord saknas")
     return nyckel, losenord
+
+
+def load_smtp_config() -> dict:
+    if not CONFIG_PATH.exists():
+        fel("SMTP-config saknas: kör setup_secrets.py för att konfigurera epost")
+    cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    epost = cfg.get("epost", {})
+    for falt in ("smtp_server", "smtp_port", "login", "password"):
+        if not epost.get(falt):
+            fel(f"SMTP-config saknar fält: {falt}")
+    return epost
+
+
+def skicka_via_smtp(faktura: dict, avsandare: dict, mottagare: dict, pdf_sokväg: str) -> str:
+    """Skicka faktura via SMTP med PDF-bilaga. Returnerar mottagarens e-post."""
+    smtp_cfg  = load_smtp_config()
+    till_epost = mottagare.get("kontakt", {}).get("epost", "")
+    if not till_epost:
+        fel("Mottagarens e-post saknas — kan inte skicka via SMTP")
+
+    fran_epost = smtp_cfg["login"]
+    nummer     = faktura.get("nummer", "")
+    mottagare_namn = mottagare.get("foretag", {}).get("namn", mottagare.get("id", ""))
+    avsandare_namn = avsandare.get("foretag", {}).get("namn", avsandare.get("id", ""))
+
+    msg = EmailMessage()
+    msg["Subject"] = f"Faktura nr {nummer} från {avsandare_namn}"
+    msg["From"]    = f"{avsandare_namn} <{fran_epost}>"
+    msg["To"]      = till_epost
+    msg.set_content(
+        f"Hej,\n\n"
+        f"Bifogat finner du faktura nr {nummer} från {avsandare_namn}.\n\n"
+        f"Förfallodatum: {faktura.get('datum', {}).get('forfallo', '')}\n"
+        f"Att betala: {faktura.get('totaler', {}).get('att_betala', 0):,.2f} SEK\n\n"
+        f"Vid frågor, kontakta oss.\n\nMed vänliga hälsningar,\n{avsandare_namn}"
+    )
+
+    pdf_path = Path(pdf_sokväg)
+    if not pdf_path.exists():
+        fel(f"PDF hittades inte: {pdf_sokväg} — kör create_invoice.py först")
+    msg.add_attachment(
+        pdf_path.read_bytes(),
+        maintype="application", subtype="pdf",
+        filename=pdf_path.name,
+    )
+
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_cfg["smtp_server"], int(smtp_cfg["smtp_port"]), context=ctx) as srv:
+        srv.login(smtp_cfg["login"], smtp_cfg["password"])
+        srv.send_message(msg)
+
+    return till_epost
 
 
 def find_or_create_client(s: requests.Session, base: str,
@@ -144,15 +199,20 @@ def build_rows(rader: list) -> list:
     return result
 
 
-def create_invoice(s: requests.Session, base: str, faktura: dict, client_id: int) -> int:
+def create_invoice(s: requests.Session, base: str, faktura: dict, client_id: int,
+                   shablon: dict | None = None) -> int:
     """Skapa faktura i Fakturan.nu. Returnerar invoice_id."""
-    avsandare_id = faktura.get("avsandare_id", "")
     payload = {
         "client_id":      client_id,
         "days":           faktura.get("betalningsvillkor_dagar", 30),
         "our_reference":  faktura.get("referens", ""),
         "rows":           build_rows(faktura.get("rader", [])),
     }
+    if shablon:
+        payload["settings"] = {
+            k: v for k, v in shablon.items()
+            if k in ("invoice_template", "show_product_code", "locale", "currency", "prices_inc_tax")
+        }
     r = s.post(f"{base}/invoices", json=payload)
     if not r.ok:
         fel(f"Kunde inte skapa faktura i Fakturan.nu: {r.text[:200]}")
@@ -184,48 +244,74 @@ def main():
         fel("Mottagare hittades inte")
     mottagare = r["mottagare"]
 
-    # 4. Bestäm miljö
-    miljo = args.miljo or avsandare.get("fakturan_nu", {}).get("miljo_default", "sandbox")
-    base  = API_URLS.get(miljo, API_URLS["sandbox"])
+    # 4. Routing: Fakturan.nu om aktiverat, annars SMTP
+    fakt_nu = avsandare.get("fakturan_nu", {})
+    anvand_fakturan_nu = fakt_nu.get("aktiverad", False)
 
-    # 5. Autentisera
-    api_key, api_pass = load_credentials(avsandare, miljo)
-    session = requests.Session()
-    session.auth = (api_key, api_pass)
-    session.headers["Content-Type"] = "application/json"
+    if anvand_fakturan_nu:
+        # ── Fakturan.nu-flöde ──────────────────────────────────────────────
+        miljo = args.miljo or fakt_nu.get("miljo_default", "sandbox")
+        base  = API_URLS.get(miljo, API_URLS["sandbox"])
 
-    # 6. Hitta eller skapa klient (använder cache i lokal DB)
-    client_id = find_or_create_client(session, base, mottagare, miljo)
+        api_key, api_pass = load_credentials(avsandare)
+        session = requests.Session()
+        session.auth = (api_key, api_pass)
+        session.headers["Content-Type"] = "application/json"
 
-    # 7. Skapa faktura i Fakturan.nu
-    fnu_invoice_id = create_invoice(session, base, faktura, client_id)
+        shablon = fakt_nu.get("shablon_instaellningar") or {}
 
-    # 8. Skicka (delivery_method=email explicit per API-docs)
-    r = session.post(f"{base}/invoices/{fnu_invoice_id}/send",
-                     json={"delivery_method": "email"})
-    if not r.ok or r.text.strip() != "OK":
-        fel(f"Skickning misslyckades: {r.status_code} {r.text[:200]}")
+        client_id      = find_or_create_client(session, base, mottagare, miljo)
+        fnu_invoice_id = create_invoice(session, base, faktura, client_id, shablon)
 
-    # 9. Logga i lokal DB
-    skickning_info = {
-        "metod":         "fakturan_nu_email",
-        "skickad_datum": nu_iso(),
-        "miljo":         miljo,
-        "fakturan_nu_id": fnu_invoice_id,
-        "mottagare_epost": mottagare.get("kontakt", {}).get("epost", ""),
-    }
-    kor(["python3", str(DB_TOOLS / "db_invoices.py"),
-         "--markera-skickad", args.faktura_id,
-         json.dumps(skickning_info, ensure_ascii=False)])
+        r = session.post(f"{base}/invoices/{fnu_invoice_id}/send",
+                         json={"delivery_method": "email"})
+        if not r.ok or r.text.strip() != "OK":
+            fel(f"Skickning misslyckades: {r.status_code} {r.text[:200]}")
 
-    ok({
-        "status":          "ok",
-        "faktura_id":      args.faktura_id,
-        "fakturan_nu_id":  fnu_invoice_id,
-        "skickad_till":    mottagare.get("kontakt", {}).get("epost", ""),
-        "miljo":           miljo,
-        "meddelande":      "Faktura skickad via Fakturan.nu",
-    })
+        skickning_info = {
+            "metod":           "fakturan_nu_email",
+            "skickad_datum":   nu_iso(),
+            "miljo":           miljo,
+            "fakturan_nu_id":  fnu_invoice_id,
+            "mottagare_epost": mottagare.get("kontakt", {}).get("epost", ""),
+        }
+        kor(["python3", str(DB_TOOLS / "db_invoices.py"),
+             "--markera-skickad", args.faktura_id,
+             json.dumps(skickning_info, ensure_ascii=False)])
+
+        ok({
+            "status":          "ok",
+            "faktura_id":      args.faktura_id,
+            "fakturan_nu_id":  fnu_invoice_id,
+            "skickad_till":    mottagare.get("kontakt", {}).get("epost", ""),
+            "miljo":           miljo,
+            "metod":           "fakturan_nu_email",
+            "meddelande":      "Faktura skickad via Fakturan.nu",
+        })
+
+    else:
+        # ── SMTP-flöde (fallback) ───────────────────────────────────────────
+        pdf_sokväg = faktura.get("pdf", {}).get("sokväg") or ""
+        till_epost = skicka_via_smtp(faktura, avsandare, mottagare, pdf_sokväg)
+
+        skickning_info = {
+            "metod":           "smtp_email",
+            "skickad_datum":   nu_iso(),
+            "miljo":           "produktion",
+            "fakturan_nu_id":  None,
+            "mottagare_epost": till_epost,
+        }
+        kor(["python3", str(DB_TOOLS / "db_invoices.py"),
+             "--markera-skickad", args.faktura_id,
+             json.dumps(skickning_info, ensure_ascii=False)])
+
+        ok({
+            "status":       "ok",
+            "faktura_id":   args.faktura_id,
+            "skickad_till": till_epost,
+            "metod":        "smtp_email",
+            "meddelande":   "Faktura skickad via SMTP (Fakturan.nu ej aktiverat)",
+        })
 
 
 if __name__ == "__main__":

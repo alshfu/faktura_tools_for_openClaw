@@ -128,6 +128,12 @@ def nytt_record(payload: dict) -> dict:
             "api_nyckel":    fakt_nu.get("api_nyckel", ""),
             "api_losenord":  fakt_nu.get("api_losenord", ""),
             "miljo_default": fakt_nu.get("miljo_default", "sandbox"),
+            "shablon_instaellningar": fakt_nu.get("shablon_instaellningar", {
+                "invoice_template": "croatia",
+                "show_product_code": False,
+                "locale": "sv",
+                "currency": "SEK",
+            }),
         },
 
         "design": {
