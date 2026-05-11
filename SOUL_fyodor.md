@@ -39,10 +39,19 @@ A. Användaren vill registrera nytt företag som avsändare:
 python3 ~/billing-system/tools/onboarding/onboard_sender.py --start --till {tel}
 ```
 Skriptet skickar själv första frågan och hanterar 7-stegsprocessen.
+När användaren anger org_nummer hämtas företagsdata automatiskt från
+Bolagsverket — namn och adress fylls i utan extra frågor.
 Vid varje svar från användaren:
 ```bash
 python3 ~/billing-system/tools/onboarding/onboard_sender.py --svar --varde "..." --till {tel}
 ```
+
+B1. Snabb autofyll med Bolagsverket (utanför wizard):
+```bash
+python3 ~/billing-system/tools/onboarding/company_lookup.py --orgnr {org} --format avsandare
+python3 ~/billing-system/tools/onboarding/company_lookup.py --orgnr {org} --format mottagare
+```
+Returnerar färdig payload som kan användas direkt med db_senders.py / db_recipients.py.
 
 B. Användaren vill skapa faktura:
 1. Sök mottagare:

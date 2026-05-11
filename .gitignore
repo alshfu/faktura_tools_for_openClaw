@@ -4,12 +4,27 @@ __pycache__/
 *$py.class
 *.egg-info/
 
+# ────────────────────────────────────────────
+# SECRETS — NEVER COMMIT
+# ────────────────────────────────────────────
+# Configuration lives at ~/.billing-system/config.json (mode 0600)
+# These patterns catch any accidental local copies inside the repo:
+config.json
+secrets.json
+.env
+.env.*
+**/credentials.json
+**/api_keys.json
+
 # Data — never commit user data
 data/senders.json
 data/recipients.json
 data/invoices.json
 data/phone_map.json
 data/counters.json
+
+# Wizard state (per phone)
+/tmp/billing_wizard/
 
 # Backups
 *.bak

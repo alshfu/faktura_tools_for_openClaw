@@ -10,10 +10,56 @@
 1. **LLM-oberoende** — alla sammanfattningar, meddelanden och beräkningar görs i skript
 2. **Mall-baserad kommunikation** — varje WhatsApp-meddelande kommer från en `.txt`-shablon
 3. **Phone → Sender mapping** — telefonnummer avgör vilket bolag man arbetar för
-4. **Versionerad datalagring** — varje ändring sparas med tidsstämpel och version
-5. **Soft delete** — inget tas bort, bara markeras inaktivt (audit-trail)
-6. **5 dizajn-shabloner** + möjlighet till per-fält anpassning
-7. **Full faktura-livscykel** — utkast → skapad → skickad → betald / krediterad / borttagen
+4. **Bolagsverket-autofyll** — företagsdata hämtas automatiskt från org_nummer
+5. **Hemligheter utanför git** — alla API-nycklar i `~/.billing-system/config.json` (mode 0600)
+6. **Versionerad datalagring** — varje ändring sparas med tidsstämpel och version
+7. **Soft delete** — inget tas bort, bara markeras inaktivt (audit-trail)
+8. **5 design-shabloner** + möjlighet till per-fält anpassning
+9. **Full faktura-livscykel** — utkast → skapad → skickad → betald / krediterad / borttagen
+
+---
+
+## 🔐 Säkerhet och hemligheter
+
+Alla hemligheter (API-nycklar, lösenord, e-postuppgifter) lagras i:
+
+```
+~/.billing-system/config.json   (mode 0600 — bara du kan läsa)
+```
+
+Filen ligger UTANFÖR projektkatalogen och kommer ALDRIG i git. `.gitignore` skyddar
+mot att den följer med av misstag.
+
+### Vad konfigureras
+
+| Sektion | Vad |
+|---------|-----|
+| `epost` | IMAP/POP3/SMTP-servrar, login, password för utgående mail |
+| `bolagsverket` | CLIENT_ID + CLIENT_SECRET för company API |
+| `fakturan_nu` | API-nyckel + password för sandbox och produktion |
+| `test` | E-postadress för automatiska tester |
+
+### Sätta/uppdatera nycklar
+
+```bash
+# Interaktivt — guidad inmatning av alla sektioner
+python3 ~/billing-system/tools/config/setup_secrets.py
+
+# Bara en sektion
+python3 ~/billing-system/tools/config/setup_secrets.py --bara bolagsverket
+python3 ~/billing-system/tools/config/setup_secrets.py --bara epost
+python3 ~/billing-system/tools/config/setup_secrets.py --bara fakturan_nu
+python3 ~/billing-system/tools/config/setup_secrets.py --bara test
+
+# Visa nuvarande (lösenord maskerade)
+python3 ~/billing-system/tools/config/setup_secrets.py --visa
+
+# Rensa allt
+python3 ~/billing-system/tools/config/setup_secrets.py --rensa
+
+# Check (returnerar JSON)
+python3 ~/billing-system/tools/utils/config.py --check
+```
 
 ---
 

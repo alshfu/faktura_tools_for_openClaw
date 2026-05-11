@@ -379,6 +379,83 @@ else:
 
 # ── Huvudkommandon ────────────────────────────────────────────────────────────
 
+setup_secrets_if_missing() {
+    header "Konfiguration av hemligheter"
+
+    local cfg_file="$HOME/.billing-system/config.json"
+    local setup_script="$INSTALL_DIR/tools/config/setup_secrets.py"
+
+    if [ ! -f "$setup_script" ]; then
+        warn "setup_secrets.py saknas — hoppar"
+        return 0
+    fi
+
+    if [ -f "$cfg_file" ]; then
+        # Kontrollera om allt är ifyllt
+        local missing
+        missing=$(python3 "$INSTALL_DIR/tools/utils/config.py" --check 2>/dev/null \
+                  | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('saknas',[])))" \
+                  2>/dev/null || echo "?")
+        if [ "$missing" = "0" ]; then
+            ok "Konfiguration finns och är komplett"
+            return 0
+        fi
+        warn "Konfiguration finns men saknar $missing fält"
+    else
+        warn "Ingen konfiguration finns ännu"
+    fi
+
+    if [ ! -t 0 ]; then
+        # Non-interactive (t.ex. piped curl) — kan inte köra setup
+        warn "Ej interaktivt läge — kör manuellt efter installation:"
+        echo "    python3 $setup_script"
+        return 0
+    fi
+
+    if [ "${AUTO_SETUP_SECRETS:-1}" = "1" ]; then
+        info "Startar konfigurationsguide..."
+        python3 "$setup_script" || warn "Konfigurationsguide avbruten"
+    else
+        info "AUTO_SETUP_SECRETS=0 — hoppar interaktiv guide"
+        echo "    Kör manuellt: python3 $setup_script"
+    fi
+}
+
+run_test_suite() {
+    local mode="$1"   # install | update
+    header "Kör testsvit"
+
+    if [ ! -f "$INSTALL_DIR/test_suite.py" ]; then
+        warn "test_suite.py saknas — hoppar tester"
+        return 0
+    fi
+
+    if [ "${SKIP_TESTS:-0}" = "1" ]; then
+        info "SKIP_TESTS=1 — hoppar tester"
+        return 0
+    fi
+
+    # Vänta på att Faktura Constructor är redo
+    local attempts=0
+    while [ $attempts -lt 15 ]; do
+        if curl -s --max-time 2 "$FAKTURA_SERVICE_URL/healthz" 2>/dev/null | grep -q '"ok":true'; then
+            break
+        fi
+        sleep 1
+        attempts=$((attempts + 1))
+    done
+
+    local test_flags="--no-cleanup"   # behåll data — städas i T10 internt
+
+    info "Startar testsvit (detta tar ~30-60 sekunder)..."
+    if python3 "$INSTALL_DIR/test_suite.py" $test_flags; then
+        ok "Testsvit: GODKÄND"
+    else
+        warn "Testsvit: NÅGRA FEL — se utdata ovan"
+        warn "Kör manuellt för detaljer: python3 $INSTALL_DIR/test_suite.py --no-cleanup"
+    fi
+}
+
 cmd_install() {
     echo -e "${BOLD}╔═══════════════════════════════════════╗${RESET}"
     echo -e "${BOLD}║  Billing System v2 — Installation   ║${RESET}"
@@ -391,7 +468,9 @@ cmd_install() {
     make_scripts_executable
     setup_faktura_service
     create_or_update_agent
+    setup_secrets_if_missing
     restart_gateway
+    run_test_suite install
 
     echo ""
     header "Klart!"
@@ -407,6 +486,7 @@ cmd_install() {
     echo ""
     echo "Status:  $0 status"
     echo "Update:  $0 update"
+    echo "Tester:  python3 $INSTALL_DIR/test_suite.py"
     echo ""
 }
 
@@ -435,6 +515,7 @@ cmd_update() {
     fi
 
     restart_gateway
+    run_test_suite update
     show_status
 
     ok "Uppdatering klar"
@@ -458,6 +539,8 @@ Miljövariabler:
   AGENT_MODEL          LLM-modell (standard: moonshot/kimi-k2.6)
   FAKTURA_PORT         Port för Faktura Constructor (standard: 3030)
   BILLING_INSTALL_DIR  Installationskatalog (standard: \$HOME/billing-system)
+  SKIP_TESTS           Sätt till 1 för att hoppa testsviten (standard: 0)
+  AUTO_SETUP_SECRETS   Sätt till 0 för att hoppa interaktiv hemlighets-guide (standard: 1)
 
 Exempel:
   $0 install

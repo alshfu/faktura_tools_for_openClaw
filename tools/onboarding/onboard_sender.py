@@ -118,6 +118,24 @@ def fel(msg: str):
 
 # ── Parsing av användarsvar per steg ──────────────────────────────────────────
 
+def _bolagsverket_lookup(orgnr: str) -> dict:
+    """Försöker hämta företagsdata från Bolagsverket. Tyst vid fel."""
+    skript = PROJEKT_ROT / "tools" / "onboarding" / "company_lookup.py"
+    if not skript.exists():
+        return {}
+    try:
+        r = subprocess.run(
+            ["python3", str(skript), "--orgnr", orgnr, "--format", "avsandare"],
+            capture_output=True, text=True, timeout=20
+        )
+        data = json.loads(r.stdout)
+        if data.get("status") == "ok":
+            return data.get("payload", {})
+    except Exception:
+        pass
+    return {}
+
+
 def parsa_steg(steg: str, varde: str, tillstand: dict) -> tuple:
     """Returnerar (data_att_lagga_till, felmeddelande_eller_None)."""
 
@@ -125,7 +143,19 @@ def parsa_steg(steg: str, varde: str, tillstand: dict) -> tuple:
         if not validera_org_nummer(varde):
             return None, "Ogiltigt org_nummer. Ange 10 siffror (med eller utan bindestreck)."
         org = formatera_org_nummer(varde)
-        return {"org_nummer": org, "moms_nummer": generera_vat(org)}, None
+        result = {"org_nummer": org, "moms_nummer": generera_vat(org)}
+
+        # Försök hämta från Bolagsverket — om det fungerar förfyller vi resten
+        bv = _bolagsverket_lookup(org)
+        if bv:
+            # Vi flaggar att Bolagsverket-data finns, så wizard kan hoppa över redan ifyllda steg
+            tillstand.setdefault("_bolagsverket", bv)
+            foretag = bv.get("foretag", {})
+            if foretag.get("namn"):
+                result["foretag"] = foretag
+            if bv.get("adress"):
+                result["adress"] = bv["adress"]
+        return result, None
 
     if steg == "name":
         delar = [d.strip() for d in varde.split(",", 1)]
@@ -268,10 +298,18 @@ def cmd_svar(args):
     # Slå ihop data
     deep_merge(tillstand["data"], data)
 
-    # Gå till nästa steg
+    # Gå till nästa steg — hoppa över steg som redan är ifyllda av Bolagsverket
     idx = STEG_ORDNING.index(nuvarande)
-    if idx + 1 < len(STEG_ORDNING):
+    while idx + 1 < len(STEG_ORDNING):
         nasta = STEG_ORDNING[idx + 1]
+        idx += 1
+
+        # Om steget redan är ifyllt (t.ex. från Bolagsverket-autofyll) — hoppa över
+        if nasta == "name" and tillstand["data"].get("foretag", {}).get("namn"):
+            continue
+        if nasta == "address" and tillstand["data"].get("adress", {}).get("gata"):
+            continue
+
         tillstand["aktuellt_steg"] = nasta
         spara_tillstand(args.telefon, tillstand)
 
@@ -281,8 +319,10 @@ def cmd_svar(args):
             skicka_shablon(STEG_SHABLON[nasta], args.telefon)
 
         ok({"meddelande": f"Steg {nuvarande} klart", "nasta_steg": nasta})
-    else:
-        slutfor(args.telefon, tillstand)
+        return
+
+    # Inga fler steg
+    slutfor(args.telefon, tillstand)
 
 
 def skicka_bekraftelse(telefon: str, tillstand: dict):

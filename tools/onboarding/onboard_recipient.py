@@ -94,11 +94,39 @@ def fel(msg: str):
     sys.exit(1)
 
 
+def _bolagsverket_lookup_mottagare(orgnr: str) -> dict:
+    """Försök hämta mottagardata från Bolagsverket. Tyst vid fel."""
+    skript = PROJEKT_ROT / "tools" / "onboarding" / "company_lookup.py"
+    if not skript.exists():
+        return {}
+    try:
+        r = subprocess.run(
+            ["python3", str(skript), "--orgnr", orgnr, "--format", "mottagare"],
+            capture_output=True, text=True, timeout=20
+        )
+        data = json.loads(r.stdout)
+        if data.get("status") == "ok":
+            return data.get("payload", {})
+    except Exception:
+        pass
+    return {}
+
+
 def parsa_steg(steg: str, varde: str) -> tuple:
     if steg == "orgnr":
         if not validera_org_nummer(varde):
             return None, "Ogiltigt org_nummer. Ange 10 siffror."
-        return {"org_nummer": formatera_org_nummer(varde)}, None
+        org = formatera_org_nummer(varde)
+        result = {"org_nummer": org}
+
+        # Försök autofyll från Bolagsverket
+        bv = _bolagsverket_lookup_mottagare(org)
+        if bv:
+            if bv.get("foretag", {}).get("namn"):
+                result["foretag"] = bv["foretag"]
+            if bv.get("adress"):
+                result["adress"] = bv["adress"]
+        return result, None
 
     if steg == "name":
         delar = [d.strip() for d in varde.split(",", 1)]
@@ -153,8 +181,16 @@ def cmd_svar(args):
     deep_merge(tillstand["data"], data)
 
     idx = STEG_ORDNING.index(nuvarande)
-    if idx + 1 < len(STEG_ORDNING):
+    while idx + 1 < len(STEG_ORDNING):
         nasta = STEG_ORDNING[idx + 1]
+        idx += 1
+
+        # Hoppa över steg som redan är ifyllda av Bolagsverket
+        if nasta == "name" and tillstand["data"].get("foretag", {}).get("namn"):
+            continue
+        if nasta == "address" and tillstand["data"].get("adress", {}).get("gata"):
+            continue
+
         tillstand["aktuellt_steg"] = nasta
         spara_tillstand(args.telefon, tillstand)
         if nasta == "confirm":
@@ -162,8 +198,9 @@ def cmd_svar(args):
         else:
             skicka_shablon(STEG_SHABLON[nasta], args.telefon)
         ok({"meddelande": f"Steg {nuvarande} klart", "nasta_steg": nasta})
-    else:
-        slutfor(args.telefon, tillstand)
+        return
+
+    slutfor(args.telefon, tillstand)
 
 
 def skicka_bekraftelse(telefon: str, tillstand: dict):
