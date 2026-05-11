@@ -276,10 +276,12 @@ def t01_skapa_avsandare(res: TestResult) -> bool:
     # Kontrollera om finns sedan tidigare
     r = db("db_senders.py", ["--finns", TEST_AVS_ORG])
     if r.get("finns"):
-        # Ta bort gamla testrester
-        db("db_senders.py", ["--ta-bort", TEST_AVS_ORG])
+        db("db_senders.py", ["--aterstall", TEST_AVS_ORG])
+        r = db("db_senders.py", ["--uppdatera", TEST_AVS_ORG,
+                                  json.dumps(AVSANDARE_PAYLOAD, ensure_ascii=False)])
+    else:
+        r = db("db_senders.py", ["--lagg-till", json.dumps(AVSANDARE_PAYLOAD, ensure_ascii=False)])
 
-    r = db("db_senders.py", ["--lagg-till", json.dumps(AVSANDARE_PAYLOAD, ensure_ascii=False)])
     if r.get("status") == "ok":
         res.ok("T01", f"Avsändare skapad: {TEST_AVS_NAMN} ({TEST_AVS_ORG})")
         return True
@@ -298,9 +300,11 @@ def t02_skapa_mottagare(res: TestResult) -> bool:
     ]:
         r = db("db_recipients.py", ["--finns", payload["org_nummer"]])
         if r.get("finns"):
-            db("db_recipients.py", ["--ta-bort", payload["org_nummer"]])
-
-        r = db("db_recipients.py", ["--lagg-till", json.dumps(payload, ensure_ascii=False)])
+            db("db_recipients.py", ["--aterstall", payload["org_nummer"]])
+            r = db("db_recipients.py", ["--uppdatera", payload["org_nummer"],
+                                         json.dumps(payload, ensure_ascii=False)])
+        else:
+            r = db("db_recipients.py", ["--lagg-till", json.dumps(payload, ensure_ascii=False)])
         if r.get("status") == "ok":
             res.ok("T02", f"Mottagare skapad: {label}")
         else:
