@@ -301,8 +301,7 @@ Per-fält-anpassning sparas i avsändarens `design.anpassningar` och appliceras 
 
 Framtida förbättringar (efter version 2):
 
-- [ ] **Merinfo.se-parsing** — autofyll företagsdata från org_nummer
-- [ ] **E-postintegration** — skicka faktura via SMTP istället för bara Fakturan.nu
+- [ ] **E-postinteration** — skicka faktura via SMTP istället för bara Fakturan.nu
 - [ ] **Påminnelser** — automatisk uppföljning av obetalda fakturor
 - [ ] **Rapporter** — månadssammanfattningar, momsdeklaration
 - [ ] **Multi-currency** — EUR, USD för internationella kunder
